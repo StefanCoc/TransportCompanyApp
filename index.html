@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Transport App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="sidebar">
+  <button onclick="show('faktura')">Napravi fakturu</button>
+  <button onclick="show('klijenti')">Lista klijenata</button>
+  <button onclick="show('ture')">Lista tura</button>
+  <button onclick="show('vozila')">Pretraga vozila</button>
+  <button onclick="show('prihodi')">Prihodi</button>
+</div>
+
+<div class="content">
+
+  <div id="faktura" class="page">
+    <h2>Napravi fakturu</h2>
+    <input id="ime_klijenta" placeholder="Ime klijenta">
+    <input id="relacija" placeholder="Relacija">
+    <input id="iznos" placeholder="Iznos">
+    <input type="date" id="datum">
+    <input id="mjesto_isporuke" placeholder="Mjesto isporuke">
+    <input id="rok_placanja" placeholder="Rok plaćanja">
+    <input id="rabat" placeholder="Rabat(%)">
+    <label><input type="checkbox" id="pdv"> PDV </label>
+    
+    <button onclick="napraviFakturu()">Snimi</button>
+  </div>
+  <div id="loading" style="display:none; text-align:center; margin-top:50px;">
+    <h2>Izrada fakture je u toku...</h2>
+    <p>Molimo sačekajte.</p>
+  </div>
+</div>
+ 
+  <div id="klijenti" class="page">
+  <h2>Lista klijenata</h2>
+  <ul id="listaKlijenata"></ul>
+  <button onclick="ucitajKlijente()">Učitaj klijente</button>
+  </div>
+
+  <div id="ture" class="page">
+  <h2>Lista tura</h2>
+  <ul id="listaTura"></ul>
+  <button onclick="ucitajTure()">Učitaj ture</button>
+  </div>
+
+  <div id="popupKlijent" class="popup hidden">
+  <div class="popup-content">
+    <h3>Unesi podatke o novom klijentu</h3>
+
+    <input id="nazivFirme" placeholder="Naziv firme">
+    <input id="jib" placeholder="JIB">
+    <input id="pib" placeholder="PIB">
+    <input id="adresa" placeholder="Adresa">
+    <input id="grad" placeholder="Grad">
+    <input id="mail" placeholder="imefirme1@gmial.com">
+    <input id="telefon" placeholder="+387 65 *** ***">
+
+    <button onclick="sacuvajKlijenta()">Sačuvaj</button>
+    <button onclick="zatvoriPopup()">Zatvori</button>
+  </div>
+</div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
