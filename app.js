@@ -1,368 +1,486 @@
-// 🔗 n8n webhook
-const N8N_WEBHOOK =
-                "http://localhost:5678/webhook-test/api"
-// =========================
-// 🧭 NAVIGACIJA (menu switch)
-// =========================
-function show(page) {
-  document.querySelectorAll(".page").forEach(p => (p.style.display = "none"));
-  const el = document.getElementById(page);
+const N8N_WEBHOOK = "http://localhost:5678/webhook/api";
+const ITEMS_PER_PAGE = 10;
+const ACTIVE_PAGE_DISPLAYS = { faktura: "grid", klijenti: "block", ture: "block", zaposleni: "block" };
+let cachedClients = [];
+let filteredClients = [];
+let cachedTours = [];
+let cachedEmployees = [];
+let currentPage = { clients: 1, tours: 1, employees: 1 };
+let pendingInvoicePayload = null;
 
-  if (page === "listaKlijenata") {
-    el.style.display = "grid";
-  } else {
-    el.style.display = "block";
+function getById(id) {
+  return document.getElementById(id);
+}
+
+function normalizeListPayload(data) {
+  if (Array.isArray(data)) return data;
+  if (data && Array.isArray(data.data)) return data.data;
+  if (data && Array.isArray(data.body)) return data.body;
+  return [];
+}
+
+function parseNumber(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function formatMoney(value) {
+  return `${value.toFixed(2)} KM`;
+}
+
+function setStatus(message, type = "success") {
+  const box = getById("statusMsg");
+  if (!box) return;
+  if (!message) {
+    box.className = "status hidden";
+    box.textContent = "";
+    return;
+  }
+
+  box.textContent = message;
+  box.className = `status ${type}`;
+}
+
+function resetInvoiceLoadingState() {
+  getById("loading")?.classList.add("hidden");
+  const faktura = getById("faktura");
+  if (faktura) {
+    faktura.style.display = ACTIVE_PAGE_DISPLAYS.faktura;
+  }
+  const submitBtn = getById("submitInvoiceBtn");
+  if (submitBtn) {
+    submitBtn.disabled = false;
   }
 }
 
+async function apiPost(payload) {
+  const res = await fetch(N8N_WEBHOOK, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  return res;
+}
+
+function show(page) {
+  const target = getById(page);
+  if (!target) {
+    setStatus("Tražena sekcija trenutno nije dostupna.", "error");
+    return;
+  }
+
+  document.querySelectorAll(".page").forEach((el) => {
+    el.style.display = "none";
+  });
+  getById("loading")?.classList.add("hidden");
+  target.style.display = ACTIVE_PAGE_DISPLAYS[page] || "block";
+}
 
 function otvoriPopup() {
-  document.getElementById("popupKlijent").classList.remove("hidden");
+  getById("popupKlijent")?.classList.remove("hidden");
 }
 
 function zatvoriPopup() {
-  document.getElementById("popupKlijent").classList.add("hidden");
+  getById("popupKlijent")?.classList.add("hidden");
 }
 
-async function sacuvajKlijenta() {
-  const payload = {
-    action: "dodaj_klijenta",
-    naziv_firme: document.getElementById("nazivFirme").value,
-    jib: document.getElementById("jib").value,
-    pib: document.getElementById("pib").value,
-    adresa: document.getElementById("adresa").value,
-    grad: document.getElementById("grad").value,
-    mail: document.getElementById("mail").value,
-    broj_telefona: document.getElementById("telefon").value
-  };
+function updateInvoiceSummary() {
+  const base = Math.max(0, parseNumber(getById("iznos")?.value));
+  const rabatPercent = Math.min(100, Math.max(0, parseNumber(getById("rabat")?.value)));
+  const discount = (base * rabatPercent) / 100;
+  const afterDiscount = Math.max(0, base - discount);
+  const vatRate = getById("pdv")?.checked ? 0.17 : 0;
+  const vatValue = afterDiscount * vatRate;
+  const total = afterDiscount + vatValue;
 
-  await fetch(N8N_WEBHOOK, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
+  if (getById("summaryBase")) getById("summaryBase").textContent = formatMoney(base);
+  if (getById("summaryDiscount")) getById("summaryDiscount").textContent = formatMoney(discount);
+  if (getById("summaryVat")) getById("summaryVat").textContent = formatMoney(vatValue);
+  if (getById("summaryTotal")) getById("summaryTotal").textContent = formatMoney(total);
+}
+
+function populateClientsDatalist(clients) {
+  const datalist = getById("klijentiDatalist");
+  if (!datalist) return;
+  datalist.innerHTML = "";
+
+  clients.forEach((k) => {
+    const naziv = (k.naziv_firme || "").trim();
+    if (!naziv) return;
+    const option = document.createElement("option");
+    option.value = naziv;
+    datalist.appendChild(option);
   });
-
-  zatvoriPopup();
-  ucitajKlijente();
 }
 
-async function napraviFakturu() {
-    // Sakrij formu
-    document.getElementById("faktura").style.display = "none";
+function fillClientList(clients) {
+  const lista = getById("listaKlijenata");
+  if (!lista) return;
+  lista.innerHTML = "";
 
-    // Prikaži loading
-    document.getElementById("loading").style.display = "block";
-    document.getElementById("loading").innerHTML = `
-      <h2>Izrada fakture je u toku...</h2>
-      <p>Molimo sačekajte.</p>
-    `;
+  if (!clients.length) {
+    const li = document.createElement("li");
+    li.textContent = "Nema dostupnih klijenata.";
+    lista.appendChild(li);
+    return;
+  }
 
-    const ime_klijenta = document.getElementById("ime_klijenta").value;
-    const relacija = document.getElementById("relacija").value;
-    const iznos = document.getElementById("iznos").value;
-    const datum = document.getElementById("datum").value;
-    const mjesto_isporuke = document.getElementById("mjesto_isporuke").value;
-    const rok_placanja = document.getElementById("rok_placanja").value;
-    const rabat = document.getElementById("rabat").value;
-    const pdv = document.getElementById("pdv").checked ? 17 : 0;
+  clients.forEach((k) => {
+    const li = document.createElement("li");
+    const brojFakture = k.broj_fakture || k.brojFakture || k.faktura_broj || "-";
+    li.textContent = `${k.naziv_firme || "Nepoznat klijent"} - ${k.grad}`;
+    lista.appendChild(li);
+  });
+}
 
-    const res = await fetch(N8N_WEBHOOK, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        action: "napravi_fakturu",
-        ime_klijenta,
-        relacija,
-        iznos,
-        datum,
-        mjesto_isporuke,
-        rok_placanja,
-        rabat,
-        pdv
-      })
+function fillToursList(tours) {
+  const lista = getById("listaTura");
+  if (!lista) return;
+  lista.innerHTML = "";
+
+  if (!tours.length) {
+    const li = document.createElement("li");
+    li.textContent = "Nema dostupnih tura.";
+    lista.appendChild(li);
+    return;
+  }
+
+  tours.forEach((t) => {
+  const li = document.createElement("li");
+
+  const br_fakture = t.id_fakture || "-";
+  const naziv_firme = t.naziv_firme || "-";
+  const datum = t.datum || "-";
+  const cijena = t.cijena || "-";
+  const relacija = t.relacija || "-";
+
+  // Ako iz baze već dobijaš puni Google Drive download link
+  const pdf_link = t.pdf_link || "#";
+
+  li.innerHTML = `
+    Firma ${naziv_firme} | Broj fakture: ${br_fakture} | Datum: ${datum} |
+    Relacija: ${relacija} | Cijena: ${cijena} KM |
+    <a href="${pdf_link}" download="FAKTURA_${br_fakture}.pdf">
+      Preuzmi fakturu
+    </a>
+  `;
+
+  lista.appendChild(li);
+});
+}
+
+function fillEmployeeList(employees) {
+  const lista = getById("listaZaposlenih");
+  if (!lista) return;
+  lista.innerHTML = "";
+
+  if (!employees.length) {
+    const li = document.createElement("li");
+    li.textContent = "Nema dostupnih vozača.";
+    lista.appendChild(li);
+    return;
+  }
+
+  employees.forEach((z) => {
+    const li = document.createElement("li");
+    const ime = z.ime || z.naziv || "Nepoznat vozač";
+    const telefon = z.broj_telefona || z.telefon || "-";
+    li.textContent = `${ime} | Telefon: ${telefon}`;
+    lista.appendChild(li);
+  });
+}
+
+function getPageSlice(items, page) {
+  const start = (page - 1) * ITEMS_PER_PAGE;
+  const end = start + ITEMS_PER_PAGE;
+  return items.slice(start, end);
+}
+
+function updatePageInfo(type, totalItems) {
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  currentPage[type] = Math.min(Math.max(1, currentPage[type]), totalPages);
+  const infoMap = {
+    clients: "clientsPageInfo",
+    tours: "toursPageInfo",
+    employees: "employeesPageInfo"
+  };
+  const info = getById(infoMap[type]);
+  if (info) info.textContent = `Stranica ${currentPage[type]} / ${totalPages}`;
+}
+
+function renderClientsPage() {
+  updatePageInfo("clients", filteredClients.length);
+  fillClientList(getPageSlice(filteredClients, currentPage.clients));
+}
+
+function renderToursPage() {
+  updatePageInfo("tours", cachedTours.length);
+  fillToursList(getPageSlice(cachedTours, currentPage.tours));
+}
+
+function renderEmployeesPage() {
+  updatePageInfo("employees", cachedEmployees.length);
+  fillEmployeeList(getPageSlice(cachedEmployees, currentPage.employees));
+}
+
+function promijeniStranicu(type, direction) {
+  const collections = {
+    clients: filteredClients,
+    tours: cachedTours,
+    employees: cachedEmployees
+  };
+  const list = collections[type] || [];
+  const totalPages = Math.max(1, Math.ceil(list.length / ITEMS_PER_PAGE));
+  const next = currentPage[type] + direction;
+  if (next < 1 || next > totalPages) return;
+  currentPage[type] = next;
+
+  if (type === "clients") renderClientsPage();
+  if (type === "tours") renderToursPage();
+  if (type === "employees") renderEmployeesPage();
+}
+
+function primijeniKlijentPretragu() {
+  const query = (getById("klijentSearch")?.value || "").trim().toLowerCase();
+  if (!query) {
+    filteredClients = [...cachedClients];
+  } else {
+    filteredClients = cachedClients.filter((k) => {
+      const naziv = (k.naziv_firme || "").toLowerCase();
+      const broj = String(k.broj_fakture || k.brojFakture || k.faktura_broj || "").toLowerCase();
+      return naziv.includes(query) || broj.includes(query);
     });
+  }
+  currentPage.clients = 1;
+  renderClientsPage();
+}
 
+function ocistiKlijentPretragu() {
+  const input = getById("klijentSearch");
+  if (input) input.value = "";
+  filteredClients = [...cachedClients];
+  currentPage.clients = 1;
+  renderClientsPage();
+}
+
+function buildInvoicePayload() {
+  const ime_klijenta = getById("ime_klijenta")?.value.trim() || "";
+  const relacija = getById("relacija")?.value.trim() || "";
+  const datum = getById("datum")?.value || "";
+  const mjesto_isporuke = getById("mjesto_isporuke")?.value.trim() || "";
+  const rok_placanja = getById("rok_placanja")?.value.trim() || "";
+  const iznos = Math.max(0, parseNumber(getById("iznos")?.value));
+  const rabat = Math.min(100, Math.max(0, parseNumber(getById("rabat")?.value)));
+  const pdv = getById("pdv")?.checked ? 17 : 0;
+
+  if (!ime_klijenta || !relacija || !datum || !mjesto_isporuke || !rok_placanja || iznos <= 0) {
+    return { error: "Popuni sva obavezna polja i unesi ispravan iznos." };
+  }
+
+  const discountValue = (iznos * rabat) / 100;
+  const subtotal = Math.max(0, iznos - discountValue);
+  const vatValue = pdv ? subtotal * 0.17 : 0;
+  const ukupno = subtotal + vatValue;
+
+  return {
+    payload: {
+      action: "napravi_fakturu",
+      ime_klijenta,
+      relacija,
+      iznos,
+      datum,
+      mjesto_isporuke,
+      rok_placanja,
+      rabat,
+      pdv,
+      ukupno
+    }
+  };
+}
+
+function extractFilenameFromContentDisposition(contentDisposition, fallbackName) {
+  if (!contentDisposition) return fallbackName;
+  const match = contentDisposition.match(/filename="?([^"]+)"?/i);
+  return match && match[1] ? match[1] : fallbackName;
+}
+
+async function submitInvoicePayload(payload) {
+  const faktura = getById("faktura");
+  const loading = getById("loading");
+  const submitBtn = getById("submitInvoiceBtn");
+
+  if (faktura) faktura.style.display = "none";
+  if (loading) loading.classList.remove("hidden");
+  if (submitBtn) submitBtn.disabled = true;
+
+  try {
+    const res = await apiPost(payload);
     if (!res.ok) {
-      document.getElementById("loading").style.display = "none";
-      document.getElementById("faktura").style.display = "grid";
-      throw new Error("Greška servera");
+      throw new Error("Greška servera prilikom izrade fakture.");
     }
 
-    const resClone = res.clone();
-
-    let data = null;
-    try {
-      data = await resClone.json();
-    } catch (e) {
-      data = null;
+    const contentType = (res.headers.get("Content-Type") || "").toLowerCase();
+    if (contentType.includes("application/json")) {
+      const data = await res.json();
+      if (data && data.missingClient === true) {
+        pendingInvoicePayload = payload;
+        setStatus("Klijent ne postoji. Dodaj klijenta pa nastavljamo automatski.", "error");
+        otvoriPopup();
+        return;
+      }
+      throw new Error(data?.message || "Neispravan odgovor servera za fakturu.");
     }
 
-    // 👉 Novi klijent
-    if (data && data.missingClient === true) {
-      document.getElementById("loading").style.display = "none";
-      document.getElementById("faktura").style.display = "grid";
-      otvoriPopup();
-      return;
+    if (!contentType.includes("application/pdf")) {
+      throw new Error("Server nije vratio PDF dokument.");
     }
 
-    // 👉 PDF
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
+    const fallback = `faktura_${payload.ime_klijenta}_${payload.datum}.pdf`;
+    const fileName = extractFilenameFromContentDisposition(
+      res.headers.get("Content-Disposition"),
+      fallback
+    );
 
     const link = document.createElement("a");
     link.href = url;
-    link.download = `Faktura_${ime_klijenta}_${datum}.pdf`;
+    link.download = fileName;
+    document.body.appendChild(link);
     link.click();
-
+    document.body.removeChild(link);
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-
-    // ✅ Nakon završetka:
-    document.getElementById("loading").style.display = "none";
-    document.getElementById("faktura").style.display = "grid";
+    setStatus("Faktura je uspješno kreirana i preuzeta.", "success");
+    pendingInvoicePayload = null;
+  } catch (error) {
+    setStatus(error.message || "Greška prilikom izrade fakture.", "error");
+  } finally {
+    resetInvoiceLoadingState();
+  }
 }
 
-// async function napraviFakturu() {
-//     // Sakrij formu
-//     document.getElementById("faktura").style.display = "none";
+async function napraviFakturu() {
+  setStatus("");
+  const result = buildInvoicePayload();
+  if (result.error) {
+    setStatus(result.error, "error");
+    return;
+  }
+  pendingInvoicePayload = result.payload;
+  await submitInvoicePayload(result.payload);
+}
 
-//     // Prikaži loading
-//     document.getElementById("loading").style.display = "block";
+async function sacuvajKlijenta() {
+  try {
+    const naziv_firme = getById("nazivFirme")?.value.trim() || "";
+    const grad = getById("grad")?.value.trim() || "";
+    if (!naziv_firme || !grad) {
+      setStatus("Naziv firme i grad su obavezni.", "error");
+      return;
+    }
 
-//     // Sakrij loading kada završi
-//     document.getElementById("loading").style.display = "none";
+    const payload = {
+      action: "dodaj_klijenta",
+      naziv_firme,
+      jib: getById("jib")?.value.trim() || "",
+      pib: getById("pib")?.value.trim() || "",
+      adresa: getById("adresa")?.value.trim() || "",
+      grad,
+      mail: getById("mail")?.value.trim() || "",
+      broj_telefona: getById("telefon")?.value.trim() || ""
+    };
 
-//     const ime_klijenta = document.getElementById("ime_klijenta").value;
-//     const relacija = document.getElementById("relacija").value;
-//     const iznos = document.getElementById("iznos").value;
-//     const datum = document.getElementById("datum").value;
-//     const mjesto_isporuke = document.getElementById("mjesto_isporuke").value;
-//     const rok_placanja = document.getElementById("rok_placanja").value;
-//     const rabat = document.getElementById("rabat").value;
-//     const pdv = document.getElementById("pdv").checked ? 17 : 0;
+    const res = await apiPost(payload);
+    if (!res.ok) {
+      throw new Error("Klijent nije sačuvan. Provjeri podatke i pokušaj ponovo.");
+    }
 
+    zatvoriPopup();
+    setStatus("Klijent je uspješno sačuvan.", "success");
+    await ucitajKlijente();
 
-//     const res = await fetch(N8N_WEBHOOK, {
-//   method: "POST",
-//   headers: {
-//     "Content-Type": "application/json"
-//   },
-//   body: JSON.stringify({
-//     action: "napravi_fakturu",
-//     ime_klijenta,
-//     relacija,
-//     iznos,
-//     datum,
-//     mjesto_isporuke,
-//     rok_placanja,
-//     rabat,
-//     pdv
-//   })
-// });
+    if (pendingInvoicePayload) {
+      await submitInvoicePayload(pendingInvoicePayload);
+    }
+  } catch (error) {
+    setStatus(error.message || "Greška prilikom snimanja klijenta.", "error");
+  }
+}
 
-// if (!res.ok) {
-//   throw new Error("Greška servera");
-// }
-
-// // 🔥 KLONIRAMO response (ključ fix-a)
-// const resClone = res.clone();
-
-// // pokušaj JSON
-// let data = null;
-// try {
-//   data = await resClone.json();
-// } catch (e) {
-//   data = null;
-// }
-
-// // 👉 NOVI KLIJENT
-// if (data && data.missingClient === true) {
-//   otvoriPopup();
-//   return;
-// }
-
-// // 👉 AKO NIJE JSON => PDF
-// const blob = await res.blob();
-// const url = URL.createObjectURL(blob);
-
-// const link = document.createElement("a");
-// link.href = url;
-// link.download = `Faktura_${ime_klijenta}_${datum}.pdf`;
-// link.click();
-
-// setTimeout(() => URL.revokeObjectURL(url), 1000);
-// }
-
-// =========================
-// 📄 2. LISTA KLIJENATA
-// =========================
 async function ucitajKlijente() {
-  const res = await fetch(N8N_WEBHOOK, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      action: "lista_klijenata"
-    })
-  });
+  try {
+    const res = await apiPost({ action: "lista_klijenata" });
+    if (!res.ok) {
+      throw new Error("Ne mogu učitati klijente.");
+    }
 
-  const data = await res.json();
-
-  console.log("DATA:", data);
-  console.log("TYPE:", typeof data);
-  console.log("IS ARRAY:", Array.isArray(data));
-
-  const lista = document.getElementById("listaKlijenata");
-  lista.innerHTML = "";
-
-  // 🔥 fallback da pokrijemo sve slučajeve
-  const listaPodataka =
-    Array.isArray(data) ? data :
-    Array.isArray(data.data) ? data.data :
-    Array.isArray(data.body) ? data.body :
-    [];
-
-  console.log("KORISTIM:", listaPodataka);
-
-  listaPodataka.forEach(k => {
-    const li = document.createElement("li");
-    li.textContent = `${k.naziv_firme} - ${k.grad}`;
-    lista.appendChild(li);
-  });
+    const data = await res.json();
+    const clients = normalizeListPayload(data);
+    cachedClients = clients;
+    filteredClients = [...clients];
+    currentPage.clients = 1;
+    renderClientsPage();
+    populateClientsDatalist(clients);
+  } catch (error) {
+    setStatus(error.message || "Greška pri učitavanju klijenata.", "error");
+  }
 }
 
-
-// =========================
-// 📦 3. LISTA TURA
-// =========================
 async function ucitajTure() {
-  const res = await fetch(N8N_WEBHOOK, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      action: "lista_tura"
-    })
-  });
+  try {
+    const res = await apiPost({ action: "lista_tura" });
+    if (!res.ok) {
+      throw new Error("Ne mogu učitati ture.");
+    }
 
-  const data = await res.json();
-
-  const lista = document.getElementById("listaTura");
-  lista.innerHTML = "";
-
-  data.forEach(t => {
-    const li = document.createElement("li");
-    li.textContent = `Tura ${t.id} | ${t.polaziste} → ${t.odrediste}`;
-    lista.appendChild(li);
-  });
+    const data = await res.json();
+    cachedTours = normalizeListPayload(data);
+    currentPage.tours = 1;
+    renderToursPage();
+  } catch (error) {
+    setStatus(error.message || "Greška pri učitavanju tura.", "error");
+  }
 }
 
-
-// =========================
-// 🚗 4. PRETRAGA VOZILA
-// =========================
-async function pretragaVozila() {
-  const reg = document.getElementById("reg").value;
-
-  const res = await fetch(N8N_WEBHOOK, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      action: "pretraga_vozila",
-      registracija: reg
-    })
-  });
-
-  const data = await res.json();
-
-  const lista = document.getElementById("rezultatVozila");
-  lista.innerHTML = "";
-
-  data.forEach(v => {
-    const li = document.createElement("li");
-    li.textContent = v.registracija;
-    lista.appendChild(li);
-  });
-}
-
-
-// =========================
-// 👷 5. PRETRAGA ZAPOSLENIH
-// =========================
-async function pretragaZaposlenih() {
-  const ime = document.getElementById("ime").value;
-
-  const res = await fetch(N8N_WEBHOOK, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
+async function ucitajZaposlene() {
+  try {
+    const ime = getById("vozacSearch")?.value.trim() || "";
+    const res = await apiPost({
       action: "pretraga_zaposlenih",
       ime
-    })
-  });
+    });
+    if (!res.ok) {
+      throw new Error("Ne mogu učitati vozače.");
+    }
 
-  const data = await res.json();
-
-  const lista = document.getElementById("rezultatZaposlenih");
-  lista.innerHTML = "";
-
-  data.forEach(z => {
-    const li = document.createElement("li");
-    li.textContent = z.ime;
-    lista.appendChild(li);
-  });
+    const data = await res.json();
+    cachedEmployees = normalizeListPayload(data);
+    currentPage.employees = 1;
+    renderEmployeesPage();
+  } catch (error) {
+    setStatus(error.message || "Greška pri učitavanju vozača.", "error");
+  }
 }
 
-
-// =========================
-// 📅 6. TURE PO DATUMU
-// =========================
-async function turePoDatumu() {
-  const datum = document.getElementById("datum").value;
-
-  const res = await fetch(N8N_WEBHOOK, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      action: "ture_po_datumu",
-      datum
-    })
-  });
-
-  const data = await res.json();
-
-  const lista = document.getElementById("listaTuraDatum");
-  lista.innerHTML = "";
-
-  data.forEach(t => {
-    const li = document.createElement("li");
-    li.textContent = `${t.polaziste} → ${t.odrediste} (${t.datum})`;
-    lista.appendChild(li);
-  });
+function turePoDatumu() {
+  setStatus("Filtriranje tura po datumu nije aktivno u ovoj MVP verziji.", "error");
 }
 
-
-// =========================
-// 📊 7. PRIHODI PO MJESECIMA
-// =========================
-async function prihodi() {
-  const res = await fetch(N8N_WEBHOOK, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      action: "prihodi_mjeseci"
-    })
-  });
-
-  const data = await res.json();
-
-  const lista = document.getElementById("prihodiList");
-  lista.innerHTML = "";
-
-  data.forEach(p => {
-    const li = document.createElement("li");
-    li.textContent = `Mjesec ${p.mjesec}: ${p.ukupno} KM`;
-    lista.appendChild(li);
-  });
+function prihodi() {
+  setStatus("Pregled prihoda nije aktivan u ovoj MVP verziji.", "error");
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  show("faktura");
+  ucitajKlijente();
+  updateInvoiceSummary();
+
+  ["iznos", "rabat", "pdv"].forEach((id) => {
+    const el = getById(id);
+    if (!el) return;
+    el.addEventListener("input", updateInvoiceSummary);
+    el.addEventListener("change", updateInvoiceSummary);
+  });
+
+  getById("klijentSearch")?.addEventListener("input", primijeniKlijentPretragu);
+});

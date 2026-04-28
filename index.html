@@ -10,57 +10,102 @@
   <button onclick="show('faktura')">Napravi fakturu</button>
   <button onclick="show('klijenti')">Lista klijenata</button>
   <button onclick="show('ture')">Lista tura</button>
-  <button onclick="show('vozila')">Pretraga vozila</button>
-  <button onclick="show('prihodi')">Prihodi</button>
+  <button onclick="show('zaposleni')">Lista vozača</button>
 </div>
 
 <div class="content">
+  <div id="statusMsg" class="status hidden"></div>
 
-  <div id="faktura" class="page">
+  <div id="faktura" class="page card">
     <h2>Napravi fakturu</h2>
-    <input id="ime_klijenta" placeholder="Ime klijenta">
+    <input id="ime_klijenta" list="klijentiDatalist" placeholder="Ime klijenta">
+    <datalist id="klijentiDatalist"></datalist>
     <input id="relacija" placeholder="Relacija">
-    <input id="iznos" placeholder="Iznos">
+    <input id="iznos" placeholder="Iznos (KM)" type="number" min="0" step="0.01">
     <input type="date" id="datum">
     <input id="mjesto_isporuke" placeholder="Mjesto isporuke">
     <input id="rok_placanja" placeholder="Rok plaćanja">
-    <input id="rabat" placeholder="Rabat(%)">
-    <label><input type="checkbox" id="pdv"> PDV </label>
-    
-    <button onclick="napraviFakturu()">Snimi</button>
+    <input id="rabat" placeholder="Rabat (%)" type="number" min="0" max="100" step="0.01">
+    <label class="checkbox-row"><input type="checkbox" id="pdv"> PDV (17%)</label>
+
+    <div id="invoiceSummary" class="invoice-summary">
+      <p>Osnovica: <strong id="summaryBase">0.00 KM</strong></p>
+      <p>Rabat: <strong id="summaryDiscount">0.00 KM</strong></p>
+      <p>PDV: <strong id="summaryVat">0.00 KM</strong></p>
+      <p>Ukupno: <strong id="summaryTotal">0.00 KM</strong></p>
+    </div>
+
+    <button id="submitInvoiceBtn" onclick="napraviFakturu()">Snimi</button>
   </div>
-  <div id="loading" style="display:none; text-align:center; margin-top:50px;">
+
+  <div id="loading" class="card loading-box hidden">
     <h2>Izrada fakture je u toku...</h2>
     <p>Molimo sačekajte.</p>
   </div>
-</div>
- 
-  <div id="klijenti" class="page">
-  <h2>Lista klijenata</h2>
-  <ul id="listaKlijenata"></ul>
-  <button onclick="ucitajKlijente()">Učitaj klijente</button>
+
+  <div id="klijenti" class="page card">
+    <h2>Lista klijenata</h2>
+    <div class="filter-row">
+      <input id="klijentSearch" placeholder="Pretraga po imenu">
+      <button onclick="primijeniKlijentPretragu()">Pretraži</button>
+      <button onclick="ocistiKlijentPretragu()">Očisti</button>
+    </div>
+    <ul id="listaKlijenata"></ul>
+    <div class="pagination-row">
+      <button onclick="promijeniStranicu('clients', -1)">Prethodna</button>
+      <span id="clientsPageInfo">Stranica 1 / 1</span>
+      <button onclick="promijeniStranicu('clients', 1)">Sljedeća</button>
+    </div>
+    <div class="actions-row">
+      <button onclick="ucitajKlijente()">Učitaj klijente</button>
+      <button onclick="otvoriPopup()">Dodaj klijenta</button>
+    </div>
   </div>
 
-  <div id="ture" class="page">
-  <h2>Lista tura</h2>
-  <ul id="listaTura"></ul>
-  <button onclick="ucitajTure()">Učitaj ture</button>
+  <div id="ture" class="page card">
+    <h2>Lista tura</h2>
+    <ul id="listaTura"></ul>
+    <div class="pagination-row">
+      <button onclick="promijeniStranicu('tours', -1)">Prethodna</button>
+      <span id="toursPageInfo">Stranica 1 / 1</span>
+      <button onclick="promijeniStranicu('tours', 1)">Sljedeća</button>
+    </div>
+    <div class="actions-row">
+      <button onclick="ucitajTure()">Učitaj ture</button>
+    </div>
+  </div>
+
+  <div id="zaposleni" class="page card">
+    <h2>Lista vozača</h2>
+    <div class="filter-row">
+      <input id="vozacSearch" placeholder="Unesi ime vozača (prazno za sve)">
+      <button onclick="ucitajZaposlene()">Učitaj vozače</button>
+    </div>
+    <ul id="listaZaposlenih"></ul>
+    <div class="pagination-row">
+      <button onclick="promijeniStranicu('employees', -1)">Prethodna</button>
+      <span id="employeesPageInfo">Stranica 1 / 1</span>
+      <button onclick="promijeniStranicu('employees', 1)">Sljedeća</button>
+    </div>
   </div>
 
   <div id="popupKlijent" class="popup hidden">
-  <div class="popup-content">
-    <h3>Unesi podatke o novom klijentu</h3>
+    <div class="popup-content">
+      <h3>Unesi podatke o novom klijentu</h3>
 
-    <input id="nazivFirme" placeholder="Naziv firme">
-    <input id="jib" placeholder="JIB">
-    <input id="pib" placeholder="PIB">
-    <input id="adresa" placeholder="Adresa">
-    <input id="grad" placeholder="Grad">
-    <input id="mail" placeholder="imefirme1@gmial.com">
-    <input id="telefon" placeholder="+387 65 *** ***">
+      <input id="nazivFirme" placeholder="Naziv firme">
+      <input id="jib" placeholder="JIB">
+      <input id="pib" placeholder="PIB">
+      <input id="adresa" placeholder="Adresa">
+      <input id="grad" placeholder="Grad">
+      <input id="mail" placeholder="imefirme1@gmail.com">
+      <input id="telefon" placeholder="+387 65 *** ***">
 
-    <button onclick="sacuvajKlijenta()">Sačuvaj</button>
-    <button onclick="zatvoriPopup()">Zatvori</button>
+      <div class="actions-row">
+        <button onclick="sacuvajKlijenta()">Sačuvaj</button>
+        <button onclick="zatvoriPopup()">Zatvori</button>
+      </div>
+    </div>
   </div>
 </div>
 </div>
