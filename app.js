@@ -1,4 +1,4 @@
-const N8N_WEBHOOK = "http://localhost:5678/webhook/api";
+const N8N_WEBHOOK = "http://localhost:5678/webhook-test/api";
 const ITEMS_PER_PAGE = 10;
 const ACTIVE_PAGE_DISPLAYS = { faktura: "grid", klijenti: "block", ture: "block", zaposleni: "block" };
 let cachedClients = [];
@@ -183,9 +183,11 @@ function fillEmployeeList(employees) {
 
   employees.forEach((z) => {
     const li = document.createElement("li");
-    const ime = z.ime || z.naziv || "Nepoznat vozač";
-    const telefon = z.broj_telefona || z.telefon || "-";
-    li.textContent = `${ime} | Telefon: ${telefon}`;
+    const ime = z.ime || "Nepoznat vozač";
+    const prezime = z.prezime|| "-";
+    const pozicija = z.pozicija|| "-";
+    const plata = z.plata || "-";
+    li.textContent = `${ime}  ${prezime} | Pozicija: ${pozicija} | Plata:${plata}KM`;
     lista.appendChild(li);
   });
 }

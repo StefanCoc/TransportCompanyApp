@@ -10,7 +10,7 @@
   <button onclick="show('faktura')">Napravi fakturu</button>
   <button onclick="show('klijenti')">Lista klijenata</button>
   <button onclick="show('ture')">Lista tura</button>
-  <button onclick="show('zaposleni')">Lista vozača</button>
+  <button onclick="show('zaposleni')">Lista zaposlenih</button>
 </div>
 
 <div class="content">
@@ -76,10 +76,10 @@
   </div>
 
   <div id="zaposleni" class="page card">
-    <h2>Lista vozača</h2>
+    <h2>Lista zaposlenih</h2>
     <div class="filter-row">
-      <input id="vozacSearch" placeholder="Unesi ime vozača (prazno za sve)">
-      <button onclick="ucitajZaposlene()">Učitaj vozače</button>
+      <input id="vozacSearch" placeholder="Unesi ime zaposlenog (prazno za sve)">
+      <button onclick="ucitajZaposlene()">Učitaj zaposlene</button>
     </div>
     <ul id="listaZaposlenih"></ul>
     <div class="pagination-row">
