@@ -50,7 +50,17 @@
       <button onclick="primijeniKlijentPretragu()">Pretraži</button>
       <button onclick="ocistiKlijentPretragu()">Očisti</button>
     </div>
-    <ul id="listaKlijenata"></ul>
+    <div class="table-wrap">
+      <table id="tabelaKlijenata">
+        <thead>
+          <tr>
+            <th>Naziv firme</th>
+            <th>Grad</th>
+          </tr>
+        </thead>
+        <tbody id="listaKlijenata"></tbody>
+      </table>
+    </div>
     <div class="pagination-row">
       <button onclick="promijeniStranicu('clients', -1)">Prethodna</button>
       <span id="clientsPageInfo">Stranica 1 / 1</span>
@@ -64,7 +74,26 @@
 
   <div id="ture" class="page card">
     <h2>Lista tura</h2>
-    <ul id="listaTura"></ul>
+    <div class="filter-row">
+      <input id="turaSearch" placeholder="Pretraga po broju fakture">
+      <button onclick="primijeniTuraPretragu()">Pretraži</button>
+      <button onclick="ocistiTuraPretragu()">Očisti</button>
+    </div>
+    <div class="table-wrap">
+      <table id="tabelaTura">
+        <thead>
+          <tr>
+            <th>Broj fakture</th>
+            <th>Firma</th>
+            <th>Datum</th>
+            <th>Relacija</th>
+            <th>Cijena</th>
+            <th>PDF</th>
+          </tr>
+        </thead>
+        <tbody id="listaTura"></tbody>
+      </table>
+    </div>
     <div class="pagination-row">
       <button onclick="promijeniStranicu('tours', -1)">Prethodna</button>
       <span id="toursPageInfo">Stranica 1 / 1</span>
@@ -78,10 +107,24 @@
   <div id="zaposleni" class="page card">
     <h2>Lista zaposlenih</h2>
     <div class="filter-row">
-      <input id="vozacSearch" placeholder="Unesi ime zaposlenog (prazno za sve)">
+      <input id="vozacSearch" placeholder="Pretraga po imenu ili prezimenu">
+      <button onclick="primijeniZaposleniPretragu()">Pretraži</button>
+      <button onclick="ocistiZaposleniPretragu()">Očisti</button>
       <button onclick="ucitajZaposlene()">Učitaj zaposlene</button>
     </div>
-    <ul id="listaZaposlenih"></ul>
+    <div class="table-wrap">
+      <table id="tabelaZaposlenih">
+        <thead>
+          <tr>
+            <th>Ime</th>
+            <th>Prezime</th>
+            <th>Pozicija</th>
+            <th>Plata</th>
+          </tr>
+        </thead>
+        <tbody id="listaZaposlenih"></tbody>
+      </table>
+    </div>
     <div class="pagination-row">
       <button onclick="promijeniStranicu('employees', -1)">Prethodna</button>
       <span id="employeesPageInfo">Stranica 1 / 1</span>
@@ -104,6 +147,16 @@
       <div class="actions-row">
         <button onclick="sacuvajKlijenta()">Sačuvaj</button>
         <button onclick="zatvoriPopup()">Zatvori</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="popupDetalji" class="popup hidden">
+    <div class="popup-content">
+      <h3 id="detaljiNaslov">Detalji</h3>
+      <div id="detaljiSadrzaj" class="details-grid"></div>
+      <div class="actions-row">
+        <button onclick="zatvoriDetalje()">Zatvori</button>
       </div>
     </div>
   </div>

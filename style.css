@@ -118,22 +118,56 @@ body {
   margin-top: 0;
 }
 
-#listaKlijenata,
-#listaTura,
-#listaZaposlenih {
-  list-style: none;
-  margin: 14px 0 0;
-  padding: 0;
+.table-wrap {
+  margin-top: 14px;
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
 }
 
-#listaKlijenata li,
-#listaTura li,
-#listaZaposlenih li {
-  margin-bottom: 10px;
+#tabelaTura,
+#tabelaKlijenata,
+#tabelaZaposlenih {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+#tabelaTura {
+  min-width: 720px;
+}
+
+#tabelaKlijenata,
+#tabelaZaposlenih {
+  min-width: 520px;
+}
+
+#tabelaTura th,
+#tabelaTura td,
+#tabelaKlijenata th,
+#tabelaKlijenata td,
+#tabelaZaposlenih th,
+#tabelaZaposlenih td {
   padding: 10px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 9px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+#tabelaTura thead th,
+#tabelaKlijenata thead th,
+#tabelaZaposlenih thead th {
   background: #f8fafc;
+  font-weight: 700;
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background: #eff6ff;
 }
 
 .filter-row {
@@ -204,6 +238,20 @@ button:hover {
   border-radius: 10px;
   display: grid;
   gap: 10px;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.details-item {
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f8fafc;
+  word-break: break-word;
 }
 
 .hidden {

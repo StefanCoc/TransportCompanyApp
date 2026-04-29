@@ -1,10 +1,12 @@
-const N8N_WEBHOOK = "http://localhost:5678/webhook-test/api";
+const N8N_WEBHOOK = "http://localhost:5678/webhook/api";
 const ITEMS_PER_PAGE = 10;
 const ACTIVE_PAGE_DISPLAYS = { faktura: "grid", klijenti: "block", ture: "block", zaposleni: "block" };
 let cachedClients = [];
 let filteredClients = [];
 let cachedTours = [];
+let filteredTours = [];
 let cachedEmployees = [];
+let filteredEmployees = [];
 let currentPage = { clients: 1, tours: 1, employees: 1 };
 let pendingInvoicePayload = null;
 
@@ -84,6 +86,39 @@ function zatvoriPopup() {
   getById("popupKlijent")?.classList.add("hidden");
 }
 
+function prettifyKey(key) {
+  return String(key).replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function toDisplayValue(value) {
+  if (value === null || value === undefined || value === "") return "-";
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
+function otvoriDetalje(title, data) {
+  const popup = getById("popupDetalji");
+  const naslov = getById("detaljiNaslov");
+  const sadrzaj = getById("detaljiSadrzaj");
+  if (!popup || !naslov || !sadrzaj) return;
+
+  naslov.textContent = title;
+  sadrzaj.innerHTML = "";
+
+  Object.entries(data || {}).forEach(([key, value]) => {
+    const row = document.createElement("div");
+    row.className = "details-item";
+    row.innerHTML = `<strong>${prettifyKey(key)}:</strong> ${toDisplayValue(value)}`;
+    sadrzaj.appendChild(row);
+  });
+
+  popup.classList.remove("hidden");
+}
+
+function zatvoriDetalje() {
+  getById("popupDetalji")?.classList.add("hidden");
+}
+
 function updateInvoiceSummary() {
   const base = Math.max(0, parseNumber(getById("iznos")?.value));
   const rabatPercent = Math.min(100, Math.max(0, parseNumber(getById("rabat")?.value)));
@@ -119,18 +154,40 @@ function fillClientList(clients) {
   lista.innerHTML = "";
 
   if (!clients.length) {
-    const li = document.createElement("li");
-    li.textContent = "Nema dostupnih klijenata.";
-    lista.appendChild(li);
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 2;
+    td.textContent = "Nema dostupnih klijenata.";
+    tr.appendChild(td);
+    lista.appendChild(tr);
     return;
   }
 
   clients.forEach((k) => {
-    const li = document.createElement("li");
-    const brojFakture = k.broj_fakture || k.brojFakture || k.faktura_broj || "-";
-    li.textContent = `${k.naziv_firme || "Nepoznat klijent"} - ${k.grad}`;
-    lista.appendChild(li);
+    const tr = document.createElement("tr");
+    tr.className = "clickable-row";
+    const tdFirma = document.createElement("td");
+    tdFirma.textContent = k.naziv_firme || "Nepoznat klijent";
+    const tdGrad = document.createElement("td");
+    tdGrad.textContent = k.grad || "-";
+    tr.appendChild(tdFirma);
+    tr.appendChild(tdGrad);
+    tr.addEventListener("click", () => {
+      otvoriDetalje(`Klijent: ${k.naziv_firme || "-"}`, k);
+    });
+    lista.appendChild(tr);
   });
+}
+
+function formatDateToDdMmYy(value) {
+  if (!value) return "-";
+  const isoDate = String(value).split("T")[0];
+  const parts = isoDate.split("-");
+  if (parts.length === 3) {
+    const [year, month, day] = parts;
+    return `${day}-${month}-${year.slice(-2)}`;
+  }
+  return String(value);
 }
 
 function fillToursList(tours) {
@@ -139,34 +196,49 @@ function fillToursList(tours) {
   lista.innerHTML = "";
 
   if (!tours.length) {
-    const li = document.createElement("li");
-    li.textContent = "Nema dostupnih tura.";
-    lista.appendChild(li);
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 6;
+    td.textContent = "Nema dostupnih tura.";
+    tr.appendChild(td);
+    lista.appendChild(tr);
     return;
   }
 
   tours.forEach((t) => {
-  const li = document.createElement("li");
+    const tr = document.createElement("tr");
+    const br_fakture = t.id_fakture || t.broj_fakture || t.brojFakture || t.faktura_broj || "-";
+    const naziv_firme = t.naziv_firme || "-";
+    const datum = formatDateToDdMmYy(t.datum);
+    const cijena = t.cijena || "-";
+    const relacija = t.relacija || "-";
+    const pdf_link = t.pdf_link || "#";
 
-  const br_fakture = t.id_fakture || "-";
-  const naziv_firme = t.naziv_firme || "-";
-  const datum = t.datum || "-";
-  const cijena = t.cijena || "-";
-  const relacija = t.relacija || "-";
+    const tdBroj = document.createElement("td");
+    tdBroj.textContent = String(br_fakture);
+    const tdFirma = document.createElement("td");
+    tdFirma.textContent = naziv_firme;
+    const tdDatum = document.createElement("td");
+    tdDatum.textContent = datum;
+    const tdRelacija = document.createElement("td");
+    tdRelacija.textContent = relacija;
+    const tdCijena = document.createElement("td");
+    tdCijena.textContent = `${cijena} KM`;
+    const tdPdf = document.createElement("td");
+    const link = document.createElement("a");
+    link.href = pdf_link;
+    link.textContent = "Preuzmi";
+    link.setAttribute("download", `FAKTURA_${br_fakture}.pdf`);
+    tdPdf.appendChild(link);
 
-  // Ako iz baze već dobijaš puni Google Drive download link
-  const pdf_link = t.pdf_link || "#";
-
-  li.innerHTML = `
-    Firma ${naziv_firme} | Broj fakture: ${br_fakture} | Datum: ${datum} |
-    Relacija: ${relacija} | Cijena: ${cijena} KM |
-    <a href="${pdf_link}" download="FAKTURA_${br_fakture}.pdf">
-      Preuzmi fakturu
-    </a>
-  `;
-
-  lista.appendChild(li);
-});
+    tr.appendChild(tdBroj);
+    tr.appendChild(tdFirma);
+    tr.appendChild(tdDatum);
+    tr.appendChild(tdRelacija);
+    tr.appendChild(tdCijena);
+    tr.appendChild(tdPdf);
+    lista.appendChild(tr);
+  });
 }
 
 function fillEmployeeList(employees) {
@@ -175,20 +247,38 @@ function fillEmployeeList(employees) {
   lista.innerHTML = "";
 
   if (!employees.length) {
-    const li = document.createElement("li");
-    li.textContent = "Nema dostupnih vozača.";
-    lista.appendChild(li);
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 4;
+    td.textContent = "Nema dostupnih zaposlenih.";
+    tr.appendChild(td);
+    lista.appendChild(tr);
     return;
   }
 
   employees.forEach((z) => {
-    const li = document.createElement("li");
+    const tr = document.createElement("tr");
+    tr.className = "clickable-row";
     const ime = z.ime || "Nepoznat vozač";
-    const prezime = z.prezime|| "-";
-    const pozicija = z.pozicija|| "-";
+    const prezime = z.prezime || "-";
+    const pozicija = z.pozicija || "-";
     const plata = z.plata || "-";
-    li.textContent = `${ime}  ${prezime} | Pozicija: ${pozicija} | Plata:${plata}KM`;
-    lista.appendChild(li);
+    const tdIme = document.createElement("td");
+    tdIme.textContent = ime;
+    const tdPrezime = document.createElement("td");
+    tdPrezime.textContent = prezime;
+    const tdPozicija = document.createElement("td");
+    tdPozicija.textContent = pozicija;
+    const tdPlata = document.createElement("td");
+    tdPlata.textContent = `${plata} KM`;
+    tr.appendChild(tdIme);
+    tr.appendChild(tdPrezime);
+    tr.appendChild(tdPozicija);
+    tr.appendChild(tdPlata);
+    tr.addEventListener("click", () => {
+      otvoriDetalje(`Zaposleni: ${ime} ${prezime}`, z);
+    });
+    lista.appendChild(tr);
   });
 }
 
@@ -216,20 +306,20 @@ function renderClientsPage() {
 }
 
 function renderToursPage() {
-  updatePageInfo("tours", cachedTours.length);
-  fillToursList(getPageSlice(cachedTours, currentPage.tours));
+  updatePageInfo("tours", filteredTours.length);
+  fillToursList(getPageSlice(filteredTours, currentPage.tours));
 }
 
 function renderEmployeesPage() {
-  updatePageInfo("employees", cachedEmployees.length);
-  fillEmployeeList(getPageSlice(cachedEmployees, currentPage.employees));
+  updatePageInfo("employees", filteredEmployees.length);
+  fillEmployeeList(getPageSlice(filteredEmployees, currentPage.employees));
 }
 
 function promijeniStranicu(type, direction) {
   const collections = {
     clients: filteredClients,
-    tours: cachedTours,
-    employees: cachedEmployees
+    tours: filteredTours,
+    employees: filteredEmployees
   };
   const list = collections[type] || [];
   const totalPages = Math.max(1, Math.ceil(list.length / ITEMS_PER_PAGE));
@@ -263,6 +353,54 @@ function ocistiKlijentPretragu() {
   filteredClients = [...cachedClients];
   currentPage.clients = 1;
   renderClientsPage();
+}
+
+function primijeniTuraPretragu() {
+  const query = (getById("turaSearch")?.value || "").trim().toLowerCase();
+  if (!query) {
+    filteredTours = [...cachedTours];
+  } else {
+    filteredTours = cachedTours.filter((t) => {
+      const brojFakture = String(
+        t.id_fakture ?? t.broj_fakture ?? t.brojFakture ?? t.faktura_broj ?? ""
+      ).toLowerCase();
+      return brojFakture.includes(query);
+    });
+  }
+  currentPage.tours = 1;
+  renderToursPage();
+}
+
+function ocistiTuraPretragu() {
+  const input = getById("turaSearch");
+  if (input) input.value = "";
+  filteredTours = [...cachedTours];
+  currentPage.tours = 1;
+  renderToursPage();
+}
+
+function primijeniZaposleniPretragu() {
+  const query = (getById("vozacSearch")?.value || "").trim().toLowerCase();
+  if (!query) {
+    filteredEmployees = [...cachedEmployees];
+  } else {
+    filteredEmployees = cachedEmployees.filter((z) => {
+      const ime = String(z.ime || "").toLowerCase();
+      const prezime = String(z.prezime || "").toLowerCase();
+      const punoIme = `${ime} ${prezime}`.trim();
+      return ime.includes(query) || prezime.includes(query) || punoIme.includes(query);
+    });
+  }
+  currentPage.employees = 1;
+  renderEmployeesPage();
+}
+
+function ocistiZaposleniPretragu() {
+  const input = getById("vozacSearch");
+  if (input) input.value = "";
+  filteredEmployees = [...cachedEmployees];
+  currentPage.employees = 1;
+  renderEmployeesPage();
 }
 
 function buildInvoicePayload() {
@@ -437,6 +575,7 @@ async function ucitajTure() {
 
     const data = await res.json();
     cachedTours = normalizeListPayload(data);
+    filteredTours = [...cachedTours];
     currentPage.tours = 1;
     renderToursPage();
   } catch (error) {
@@ -457,6 +596,7 @@ async function ucitajZaposlene() {
 
     const data = await res.json();
     cachedEmployees = normalizeListPayload(data);
+    filteredEmployees = [...cachedEmployees];
     currentPage.employees = 1;
     renderEmployeesPage();
   } catch (error) {
@@ -485,4 +625,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   getById("klijentSearch")?.addEventListener("input", primijeniKlijentPretragu);
+  getById("turaSearch")?.addEventListener("input", primijeniTuraPretragu);
+  getById("vozacSearch")?.addEventListener("input", primijeniZaposleniPretragu);
 });
