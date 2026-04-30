@@ -178,17 +178,30 @@ function fillClientList(clients) {
     lista.appendChild(tr);
   });
 }
-
 function formatDateToDdMmYy(value) {
   if (!value) return "-";
+
   const isoDate = String(value).split("T")[0];
   const parts = isoDate.split("-");
+
   if (parts.length === 3) {
     const [year, month, day] = parts;
-    return `${day}-${month}-${year.slice(-2)}`;
+    return `${day}.${month}.${year}`;
   }
+
   return String(value);
 }
+
+// function formatDateToDdMmYy(value) {
+//   if (!value) return "-";
+//   const isoDate = String(value).split("T")[0];
+//   const parts = isoDate.split("-");
+//   if (parts.length === 3) {
+//     const [year, month, day] = parts;
+//     return `${day}-${month}-${year.slice(-2)}`;
+//   }
+//   return String(value);
+// }
 
 function fillToursList(tours) {
   const lista = getById("listaTura");
@@ -255,7 +268,7 @@ function fillEmployeeList(employees) {
     lista.appendChild(tr);
     return;
   }
-
+  
   employees.forEach((z) => {
     const tr = document.createElement("tr");
     tr.className = "clickable-row";
@@ -263,6 +276,9 @@ function fillEmployeeList(employees) {
     const prezime = z.prezime || "-";
     const pozicija = z.pozicija || "-";
     const plata = z.plata || "-";
+    const datumRodjenja = formatDateToDdMmYy(z.datum_rodjenja || "-");
+    const datumZaposlenja = formatDateToDdMmYy(z.datum_zaposlenja || "-");
+    const radniStaz = z.radni_staz || "-";
     const tdIme = document.createElement("td");
     tdIme.textContent = ime;
     const tdPrezime = document.createElement("td");
@@ -271,13 +287,22 @@ function fillEmployeeList(employees) {
     tdPozicija.textContent = pozicija;
     const tdPlata = document.createElement("td");
     tdPlata.textContent = `${plata} KM`;
+    const tdDatumRodjenja = document.createElement("td");
+    tdDatumRodjenja.textContent = datumRodjenja;
+    const tdDatumZaposlenja = document.createElement("td");
+    tdDatumZaposlenja.textContent = datumZaposlenja;
     tr.appendChild(tdIme);
     tr.appendChild(tdPrezime);
     tr.appendChild(tdPozicija);
     tr.appendChild(tdPlata);
     tr.addEventListener("click", () => {
-      otvoriDetalje(`Zaposleni: ${ime} ${prezime}`, z);
+      otvoriDetalje(`Zaposleni: ${ime} ${prezime}`, {
+    ...z,
+    datum_rodjenja: datumRodjenja,
+    datum_zaposlenja: datumZaposlenja,
+    radni_staz: radniStaz + " godine"
     });
+  });
     lista.appendChild(tr);
   });
 }
