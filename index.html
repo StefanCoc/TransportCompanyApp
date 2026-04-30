@@ -72,7 +72,67 @@
     </div>
   </div>
 
-  <div id="ture" class="page card">
+  <!-- ZAMIJENI CIJELI postojeći filter dio u #ture ovim -->
+
+<div id="ture" class="page card">
+  <h2>Lista tura</h2>
+
+  <!-- Dugmad za izbor filtera -->
+  <div class="filter-switch-row">
+    <button type="button" onclick="prikaziFilterTura('broj')">
+      Broj fakture
+    </button>
+
+    <button type="button" onclick="prikaziFilterTura('datum')">
+      Datum
+    </button>
+
+    <button type="button" onclick="resetTourFilters()">
+      Očisti
+    </button>
+  </div>
+
+  <!-- FILTER BROJ FAKTURE -->
+  <div id="filterBrojFakture" class="filter-row hidden">
+    <input id="turaSearch" placeholder="Unesi broj fakture">
+    <button onclick="primijeniTuraPretragu()">Pretraži</button>
+  </div>
+
+  <!-- FILTER DATUM -->
+  <div id="filterDatumTure" class="filter-row hidden">
+    <input type="date" id="datumOd">
+    <input type="date" id="datumDo">
+    <button onclick="turePoDatumu()">Filtriraj</button>
+  </div>
+
+  <div class="table-wrap">
+    <table id="tabelaTura">
+      <thead>
+        <tr>
+          <th>Broj fakture</th>
+          <th>Firma</th>
+          <th>Datum</th>
+          <th>Relacija</th>
+          <th>Cijena</th>
+          <th>PDF</th>
+        </tr>
+      </thead>
+      <tbody id="listaTura"></tbody>
+    </table>
+  </div>
+
+  <div class="pagination-row">
+    <button onclick="promijeniStranicu('tours', -1)">Prethodna</button>
+    <span id="toursPageInfo">Stranica 1 / 1</span>
+    <button onclick="promijeniStranicu('tours', 1)">Sljedeća</button>
+  </div>
+
+  <div class="actions-row">
+    <button onclick="ucitajTure()">Učitaj ture</button>
+  </div>
+</div>
+
+  <!-- <div id="ture" class="page card">
     <h2>Lista tura</h2>
     <div class="filter-row">
       <input id="turaSearch" placeholder="Pretraga po broju fakture">
@@ -80,6 +140,16 @@
       <button onclick="ocistiTuraPretragu()">Očisti</button>
     </div>
     <div class="table-wrap">
+      <div class="filter-bar">
+    <label>Od:</label>
+    <input type="date" id="datumOd">
+
+    <label>Do:</label>
+    <input type="date" id="datumDo">
+
+    <button onclick="turePoDatumu()">Filtriraj</button>
+    <button onclick="ocistiTuraPretragu()">Reset</button>
+</div>
       <table id="tabelaTura">
         <thead>
           <tr>
@@ -102,7 +172,7 @@
     <div class="actions-row">
       <button onclick="ucitajTure()">Učitaj ture</button>
     </div>
-  </div>
+  </div> -->
 
   <div id="zaposleni" class="page card">
     <h2>Lista zaposlenih</h2>

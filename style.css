@@ -301,3 +301,20 @@ button:hover {
     grid-template-columns: 1fr;
   }
 }
+
+
+.filter-switch-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.filter-switch-row button {
+  min-width: 150px;
+}
+
+#filterBrojFakture,
+#filterDatumTure {
+  margin-bottom: 14px;
+}

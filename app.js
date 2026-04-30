@@ -378,6 +378,42 @@ function ocistiTuraPretragu() {
   currentPage.tours = 1;
   renderToursPage();
 }
+function prikaziFilterTura(tip) {
+  const broj = getById("filterBrojFakture");
+  const datum = getById("filterDatumTure");
+
+  if (!broj || !datum) return;
+
+  broj.classList.add("hidden");
+  datum.classList.add("hidden");
+
+  if (tip === "broj") {
+    broj.classList.remove("hidden");
+  }
+
+  if (tip === "datum") {
+    datum.classList.remove("hidden");
+  }
+}
+
+function resetTourFilters() {
+  const brojInput = getById("turaSearch");
+  const datumOd = getById("datumOd");
+  const datumDo = getById("datumDo");
+
+  if (brojInput) brojInput.value = "";
+  if (datumOd) datumOd.value = "";
+  if (datumDo) datumDo.value = "";
+
+  filteredTours = [...cachedTours];
+  currentPage.tours = 1;
+  renderToursPage();
+
+  getById("filterBrojFakture")?.classList.add("hidden");
+  getById("filterDatumTure")?.classList.add("hidden");
+
+  setStatus("Filteri su očišćeni.", "success");
+}
 
 function primijeniZaposleniPretragu() {
   const query = (getById("vozacSearch")?.value || "").trim().toLowerCase();
@@ -605,7 +641,50 @@ async function ucitajZaposlene() {
 }
 
 function turePoDatumu() {
-  setStatus("Filtriranje tura po datumu nije aktivno u ovoj MVP verziji.", "error");
+  try {
+    const datumOd = getById("datumOd")?.value || "";
+    const datumDo = getById("datumDo")?.value || "";
+
+    // Ako ništa nije uneseno -> vrati sve ture
+    if (!datumOd && !datumDo) {
+      filteredTours = [...cachedTours];
+      currentPage.tours = 1;
+      renderToursPage();
+      setStatus("Prikazane su sve ture.", "success");
+      return;
+    }
+
+    const od = datumOd ? new Date(datumOd) : null;
+    const doDate = datumDo ? new Date(datumDo) : null;
+
+    // Da datumDo obuhvati cijeli dan
+    if (doDate) {
+      doDate.setHours(23, 59, 59, 999);
+    }
+
+    filteredTours = cachedTours.filter((t) => {
+      if (!t.datum) return false;
+
+      const datumTure = new Date(t.datum);
+
+      if (od && datumTure < od) return false;
+      if (doDate && datumTure > doDate) return false;
+
+      return true;
+    });
+
+    currentPage.tours = 1;
+    renderToursPage();
+
+    if (filteredTours.length) {
+      setStatus(`Pronađeno ${filteredTours.length} tura u odabranom periodu.`, "success");
+    } else {
+      setStatus("Nema tura za odabrani period.", "error");
+    }
+
+  } catch (error) {
+    setStatus("Greška pri filtriranju tura po datumu.", "error");
+  }
 }
 
 function prihodi() {
