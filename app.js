@@ -1,4 +1,5 @@
 const N8N_WEBHOOK = "http://localhost:5678/webhook/api";
+const LOGIN_WEBHOOK = "http://localhost:5678/webhook/login";
 const ITEMS_PER_PAGE = 10;
 const ACTIVE_PAGE_DISPLAYS = { faktura: "grid", klijenti: "block", ture: "block", zaposleni: "block" };
 let cachedClients = [];
@@ -19,6 +20,55 @@ function normalizeListPayload(data) {
   if (data && Array.isArray(data.data)) return data.data;
   if (data && Array.isArray(data.body)) return data.body;
   return [];
+}
+async function login() {
+  const username = getById("loginUsername")?.value.trim();
+  const password = getById("loginPassword")?.value.trim();
+  const errorBox = getById("loginError");
+
+  if (!username || !password) {
+    errorBox.textContent = "Unesi korisničko ime i lozinku.";
+    errorBox.classList.remove("hidden");
+    return;
+  }
+
+  try {
+    const res = await fetch(LOGIN_WEBHOOK, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        username,
+        password
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || "Neispravni podaci.");
+    }
+
+    // Spasi token ili session
+    localStorage.setItem("authToken", data.token || "logged_in");
+
+    // Sakrij login
+    getById("loginPage")?.classList.add("hidden");
+
+    // Prikaži aplikaciju
+    document.querySelector(".sidebar").style.display = "flex";
+    document.querySelector(".content").style.display = "block";
+
+  } catch (error) {
+    errorBox.textContent = error.message;
+    errorBox.classList.remove("hidden");
+  }
+}
+
+function logout() {
+  localStorage.removeItem("authToken");
+  location.reload();
 }
 
 function parseNumber(value, fallback = 0) {
@@ -717,6 +767,22 @@ function prihodi() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  const token = localStorage.getItem("authToken");
+
+  // Ako korisnik NIJE prijavljen
+  if (!token) {
+    document.querySelector(".sidebar").style.display = "none";
+    document.querySelector(".content").style.display = "none";
+    getById("loginPage")?.classList.remove("hidden");
+    return;
+  }
+
+  // Ako jeste prijavljen
+  getById("loginPage")?.classList.add("hidden");
+  document.querySelector(".sidebar").style.display = "flex";
+  document.querySelector(".content").style.display = "block";
+
+  // Pokreni aplikaciju normalno
   show("faktura");
   ucitajKlijente();
   updateInvoiceSummary();
@@ -724,6 +790,7 @@ document.addEventListener("DOMContentLoaded", () => {
   ["iznos", "rabat", "pdv"].forEach((id) => {
     const el = getById(id);
     if (!el) return;
+
     el.addEventListener("input", updateInvoiceSummary);
     el.addEventListener("change", updateInvoiceSummary);
   });

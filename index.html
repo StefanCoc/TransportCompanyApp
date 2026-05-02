@@ -6,11 +6,25 @@
 </head>
 <body>
 
+<div id="loginPage" class="login-page">
+  <div class="login-card">
+    <h2>Prijava</h2>
+
+    <input id="loginUsername" placeholder="Korisničko ime">
+    <input id="loginPassword" type="password" placeholder="Lozinka">
+
+    <button onclick="login()">Prijavi se</button>
+
+    <p id="loginError" class="login-error hidden"></p>
+  </div>
+</div>
+
 <div class="sidebar">
   <button onclick="show('faktura')">Napravi fakturu</button>
   <button onclick="show('klijenti')">Lista klijenata</button>
   <button onclick="show('ture')">Lista tura</button>
   <button onclick="show('zaposleni')">Lista zaposlenih</button>
+  <button onclick="logout()">Odjava</button>
 </div>
 
 <div class="content">
@@ -26,8 +40,10 @@
     <input id="mjesto_isporuke" placeholder="Mjesto isporuke">
     <input id="rok_placanja" placeholder="Rok plaćanja">
     <input id="rabat" placeholder="Rabat (%)" type="number" min="0" max="100" step="0.01">
-    <label class="checkbox-row"><input type="checkbox" id="pdv"> PDV (17%)</label>
-
+<label class="checkbox-row">
+  <input type="checkbox" id="pdv">
+  <span>PDV (17%)</span>
+</label>
     <div id="invoiceSummary" class="invoice-summary">
       <p>Osnovica: <strong id="summaryBase">0.00 KM</strong></p>
       <p>Rabat: <strong id="summaryDiscount">0.00 KM</strong></p>
