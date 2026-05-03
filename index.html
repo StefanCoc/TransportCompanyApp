@@ -20,6 +20,7 @@
 </div>
 
 <div class="sidebar">
+  <button onclick="show('dashboard'); ucitajDashboard()">Dashboard</button>
   <button onclick="show('faktura')">Napravi fakturu</button>
   <button onclick="show('klijenti')">Lista klijenata</button>
   <button onclick="show('ture')">Lista tura</button>
@@ -29,6 +30,29 @@
 
 <div class="content">
   <div id="statusMsg" class="status hidden"></div>
+
+  <div id="dashboard" class="page card">
+  <h2>Dashboard</h2>
+
+  <div class="dashboard-grid">
+
+    <div class="dash-box">
+      <h3>Prihod ovaj mjesec</h3>
+      <p id="dashPrihod">0 KM</p>
+    </div>
+
+    <div class="dash-box">
+      <h3>Neplaćene fakture</h3>
+      <p id="dashFakture">0</p>
+    </div>
+
+    <div class="dash-box">
+      <h3>Ture u zadnjih 7 dana</h3>
+      <p id="dashTure">0</p>
+    </div>
+
+  </div>
+</div>
 
   <div id="faktura" class="page card">
     <h2>Napravi fakturu</h2>

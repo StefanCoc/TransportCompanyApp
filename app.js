@@ -1,7 +1,8 @@
 const N8N_WEBHOOK = "http://localhost:5678/webhook/api";
 const LOGIN_WEBHOOK = "http://localhost:5678/webhook/login";
 const ITEMS_PER_PAGE = 10;
-const ACTIVE_PAGE_DISPLAYS = { faktura: "grid", klijenti: "block", ture: "block", zaposleni: "block" };
+const ACTIVE_PAGE_DISPLAYS = 
+{ dashbord:"block", faktura: "grid", klijenti: "block", ture: "block", zaposleni: "block" };
 let cachedClients = [];
 let filteredClients = [];
 let cachedTours = [];
@@ -783,8 +784,11 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelector(".content").style.display = "block";
 
   // Pokreni aplikaciju normalno
-  show("faktura");
+  show("dashboard");
+  ucitajDashboard();
   ucitajKlijente();
+  ucitajTure();
+  ucitajZaposlene();
   updateInvoiceSummary();
 
   ["iznos", "rabat", "pdv"].forEach((id) => {
@@ -799,3 +803,31 @@ document.addEventListener("DOMContentLoaded", () => {
   getById("turaSearch")?.addEventListener("input", primijeniTuraPretragu);
   getById("vozacSearch")?.addEventListener("input", primijeniZaposleniPretragu);
 });
+
+async function ucitajDashboard() {
+  try {
+    const res = await apiPost({
+      action: "dashboard"
+    });
+
+    if (!res.ok) {
+      throw new Error("Greška servera.");
+    }
+
+    const data = await res.json();
+
+    const stats = data[0];
+
+    getById("dashPrihod").innerText =
+      (stats.mjesecni_prihod || 0) + " KM";
+
+    getById("dashFakture").innerText =
+      stats.neplacene || 0;
+
+    getById("dashTure").innerText =
+      stats.ture_ove_sedmice || 0;
+
+  } catch (error) {
+    setStatus("Greška pri učitavanju dashboarda.", "error");
+  }
+}
