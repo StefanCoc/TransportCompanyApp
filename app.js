@@ -170,6 +170,10 @@ function zatvoriDetalje() {
   getById("popupDetalji")?.classList.add("hidden");
 }
 
+function zatvoriPopupTure() {
+  getById("popupTura")?.classList.add("hidden");
+}
+
 function updateInvoiceSummary() {
   const base = Math.max(0, parseNumber(getById("iznos")?.value));
   const rabatPercent = Math.min(100, Math.max(0, parseNumber(getById("rabat")?.value)));
@@ -277,6 +281,8 @@ function fillToursList(tours) {
     const cijena = t.cijena || "-";
     const relacija = t.relacija || "-";
     const pdf_link = t.pdf_link || "#";
+    const status = t.status || "Neplaceno";
+    //console.log(t);
 
     const tdBroj = document.createElement("td");
     tdBroj.textContent = String(br_fakture);
@@ -302,6 +308,12 @@ function fillToursList(tours) {
     tr.appendChild(tdCijena);
     tr.appendChild(tdPdf);
     lista.appendChild(tr);
+
+    tr.className = "clickable-row";
+
+tr.addEventListener("click", () => {
+  otvoriDetaljeTure(t);
+});
   });
 }
 
@@ -389,6 +401,44 @@ function renderToursPage() {
 function renderEmployeesPage() {
   updatePageInfo("employees", filteredEmployees.length);
   fillEmployeeList(getPageSlice(filteredEmployees, currentPage.employees));
+}
+
+let aktivnaTuraId = null;
+
+function otvoriDetaljeTure(tura) {
+  aktivnaTuraId = tura.id_fakture;
+
+  getById("turaDetalji").innerHTML = `
+    <p><strong>Broj:</strong> ${tura.id_fakture}</p>
+    <p><strong>Firma:</strong> ${tura.naziv_firme}</p>
+    <p><strong>Iznos:</strong> ${tura.cijena} KM</p>
+    <p><strong>Relacija:</strong> ${tura.relacija}</p>
+  `;
+
+  getById("noviStatus").value =
+    tura.status || "Neplaćeno";
+
+  getById("popupTura").classList.remove("hidden");
+
+  const status = tura.status || "Neplaćeno";
+
+getById("trenutniStatus").innerText = status;
+getById("trenutniStatus").className = "status-badge status-" + status;
+
+getById("noviStatus").value = status;
+}
+
+async function sacuvajStatusTure() {
+  const status = getById("noviStatus").value;
+
+  await apiPost({
+    action: "promijeni_status",
+    id_fakture: aktivnaTuraId,
+    status: status
+  });
+
+  zatvoriPopupTure();
+  ucitajTure();
 }
 
 function promijeniStranicu(type, direction) {

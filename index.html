@@ -161,6 +161,33 @@
     </table>
   </div>
 
+  <div id="popupTura" class="popup hidden">
+  <div class="popup-content">
+    <h3>Detalji ture</h3>
+
+    <div id="turaDetalji"></div>
+
+    <div class="status-box">
+  <label>Trenutni status</label>
+  <div id="trenutniStatus" class="status-badge">-</div>
+</div>
+
+<div class="status-box">
+  <label>Promijeni status</label>
+  <select id="noviStatus" class="nice-select">
+    <option value="neplaceno">Neplaćeno</option>
+    <option value="placeno">Plaćeno</option>
+    <option value="kasni">Kasni</option>
+  </select>
+</div>
+
+    <div class="actions-row">
+      <button onclick="sacuvajStatusTure()">Sačuvaj</button>
+      <button onclick="zatvoriPopupTure()">Zatvori</button>
+    </div>
+  </div>
+</div>
+
   <div class="pagination-row">
     <button onclick="promijeniStranicu('tours', -1)">Prethodna</button>
     <span id="toursPageInfo">Stranica 1 / 1</span>
