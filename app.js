@@ -738,6 +738,7 @@ async function ucitajTure() {
     const data = await res.json();
     cachedTours = normalizeListPayload(data);
     filteredTours = [...cachedTours];
+    updateStatusDropdown();
     currentPage.tours = 1;
     renderToursPage();
   } catch (error) {
@@ -899,4 +900,34 @@ function filtrirajPoStatusu() {
 
   currentPage.tours = 1;
   renderToursPage();
+}
+
+function izracunajStatuse() {
+  let placeno = 0;
+  let neplaceno = 0;
+  let kasni = 0;
+
+  cachedTours.forEach(t => {
+    const status = String(t.status || "").toLowerCase();
+
+    if (status === "placeno") placeno++;
+    else if (status === "neplaceno") neplaceno++;
+    else if (status === "kasni") kasni++;
+  });
+
+  return { placeno, neplaceno, kasni };
+}
+
+function updateStatusDropdown() {
+  const stats = izracunajStatuse();
+
+  const select = getById("statusFilter");
+  if (!select) return;
+
+  select.innerHTML = `
+    <option value="">Svi (${cachedTours.length})</option>
+    <option value="placeno">Plaćeno (${stats.placeno})</option>
+    <option value="neplaceno">Neplaćeno (${stats.neplaceno})</option>
+    <option value="kasni">Kasni (${stats.kasni})</option>
+  `;
 }
