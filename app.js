@@ -881,3 +881,22 @@ async function ucitajDashboard() {
     setStatus("Greška pri učitavanju dashboarda.", "error");
   }
 }
+
+function filtrirajPoStatusu() {
+  const status = (getById("statusFilter")?.value || "").trim().toLowerCase();
+
+  if (!status) {
+    filteredTours = [...cachedTours];
+  } else {
+    filteredTours = cachedTours.filter((t) => {
+      const dbStatus = String(t.status || "")
+        .trim()
+        .toLowerCase();
+
+      return dbStatus === status;
+    });
+  }
+
+  currentPage.tours = 1;
+  renderToursPage();
+}

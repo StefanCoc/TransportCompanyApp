@@ -127,6 +127,13 @@
       Datum
     </button>
 
+    <select id="statusFilter" onchange="filtrirajPoStatusu()">
+  <option value="">Svi statusi</option>
+  <option value="placeno">Plaćeno</option>
+  <option value="neplaceno">Neplaćeno</option>
+  <option value="kasni">Kasni</option>
+  </select>
+
     <button type="button" onclick="resetTourFilters()">
       Očisti
     </button>
