@@ -51,8 +51,11 @@ async function login() {
       throw new Error(data.message || "Neispravni podaci.");
     }
 
-    // Spasi token ili session
+    // Token traje 24h
+    const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+
     localStorage.setItem("authToken", data.token || "logged_in");
+    localStorage.setItem("expiresAt", expiresAt);
 
     // Sakrij login
     getById("loginPage")?.classList.add("hidden");
@@ -60,6 +63,14 @@ async function login() {
     // Prikaži aplikaciju
     document.querySelector(".sidebar").style.display = "flex";
     document.querySelector(".content").style.display = "block";
+
+    // Učitaj početne podatke
+    show("dashboard");
+    await ucitajDashboard();
+    await ucitajKlijente();
+    await ucitajTure();
+    await ucitajZaposlene();
+    updateInvoiceSummary();
 
   } catch (error) {
     errorBox.textContent = error.message;
@@ -69,6 +80,7 @@ async function login() {
 
 function logout() {
   localStorage.removeItem("authToken");
+  localStorage.removeItem("expiresAt");
   location.reload();
 }
 
@@ -246,17 +258,6 @@ function formatDateToDdMmYy(value) {
 
   return String(value);
 }
-
-// function formatDateToDdMmYy(value) {
-//   if (!value) return "-";
-//   const isoDate = String(value).split("T")[0];
-//   const parts = isoDate.split("-");
-//   if (parts.length === 3) {
-//     const [year, month, day] = parts;
-//     return `${day}-${month}-${year.slice(-2)}`;
-//   }
-//   return String(value);
-// }
 
 function fillToursList(tours) {
   const lista = getById("listaTura");
@@ -820,11 +821,20 @@ function prihodi() {
 
 document.addEventListener("DOMContentLoaded", () => {
   const token = localStorage.getItem("authToken");
+  const expiresAt = localStorage.getItem("expiresAt");
 
-  // Ako korisnik NIJE prijavljen
-  if (!token) {
+  // Ako nema tokena ili je istekao
+  if (
+    !token ||
+    !expiresAt ||
+    Date.now() > Number(expiresAt)
+  ) {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("expiresAt");
+
     document.querySelector(".sidebar").style.display = "none";
     document.querySelector(".content").style.display = "none";
+
     getById("loginPage")?.classList.remove("hidden");
     return;
   }
