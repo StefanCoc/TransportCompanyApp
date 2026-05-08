@@ -66,6 +66,7 @@ async function login() {
 
     // Učitaj početne podatke
     show("dashboard");
+    await ucitajKasneFakture();
     await ucitajDashboard();
     await ucitajKlijente();
     await ucitajTure();
@@ -283,7 +284,6 @@ function fillToursList(tours) {
     const relacija = t.relacija || "-";
     const pdf_link = t.pdf_link || "#";
     const status = t.status || "Neplaceno";
-    //console.log(t);
 
     const tdBroj = document.createElement("td");
     tdBroj.textContent = String(br_fakture);
@@ -888,8 +888,72 @@ async function ucitajDashboard() {
     getById("dashTure").innerText =
       stats.ture_ove_sedmice || 0;
 
+    await ucitajKasneFakture();
+
+
   } catch (error) {
     setStatus("Greška pri učitavanju dashboarda.", "error");
+  }
+}
+
+function renderLateInvoices(invoices) {
+
+  const container = getById("lateInvoicesList");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  if (!Array.isArray(invoices)) {
+    invoices = [invoices];
+  }
+
+  if (invoices.length === 0) {
+    container.innerHTML = `
+      <div class="late-invoice-item">
+        Nema faktura koje kasne.
+      </div>
+    `;
+    return;
+  }
+
+  invoices.forEach(inv => {
+
+    const div = document.createElement("div");
+    div.className = "late-invoice-item clickable-row";
+
+    div.innerHTML = `
+      <div class="late-invoice-info">
+        <div class="late-invoice-id">#${inv.id_fakture}</div>
+        <div class="late-invoice-company">${inv.naziv_firme}</div>
+      </div>
+
+      <div class="late-invoice-days">
+        ${inv.dana_kasni} dana
+      </div>
+    `;
+
+    container.appendChild(div);
+  });
+}
+
+
+async function ucitajKasneFakture() {
+  try {
+
+    const res = await apiPost({
+      action: "ucitaj_kasne"
+    });
+
+    if (!res.ok) {
+      throw new Error("Greška servera.");
+    }
+
+    const data = await res.json();
+
+    renderLateInvoices(data);
+
+  } catch(error) {
+    setStatus("Greška pri učitavanju kasnih faktura.", "error");
   }
 }
 

@@ -402,6 +402,87 @@ button:hover {
   color:#2563eb;
 }
 
+/* ========================= */
+/* FAKTURE KOJE */
+/* ========================= */
+
+.warning-box{
+  grid-column:span 2;
+}
+
+.warning-box h3{
+  color:#b91c1c;
+}
+
+/* lista */
+.late-invoices-list{
+  margin-top:12px;
+
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+
+  max-height:200px;
+  overflow-y:auto;
+
+  padding-right:4px;
+}
+
+/* jedna stavka */
+.late-invoice-item{
+  background:#fef2f2;
+  border:1px solid #fecaca;
+  border-radius:10px;
+
+  padding:12px;
+
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  font-size:14px;
+}
+
+/* lijevi dio */
+.late-invoice-info{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+/* broj fakture */
+.late-invoice-id{
+  font-weight:700;
+  color:#991b1b;
+}
+
+/* firma */
+.late-invoice-company{
+  color:#444;
+}
+
+/* desni badge */
+.late-invoice-days{
+  background:#ce1c1c;
+  color:rgb(245, 236, 236);
+
+  padding:6px 10px;
+  border-radius:999px;
+
+  font-size:12px;
+  font-weight:600;
+}
+
+/* scrollbar */
+.late-invoices-list::-webkit-scrollbar{
+  width:6px;
+}
+
+.late-invoices-list::-webkit-scrollbar-thumb{
+  background:#d1d5db;
+  border-radius:999px;
+}
+
 .status-box{
   display:flex;
   flex-direction:column;
@@ -424,19 +505,10 @@ button:hover {
 }
 
 /* status boje */
-.status-Neplaćeno{
-  background:#fee2e2;
-  color:#b91c1c;
-}
 
 .status-neplaceno{
   background:#fee2e2;
   color:#b91c1c;
-}
-
-.status-Plaćeno{
-  background:#dcfce7;
-  color:#166534;
 }
 
 .status-placeno{
@@ -444,9 +516,9 @@ button:hover {
   color:#166534;
 }
 
-.status-Kasni{
-  background:#ffedd5;
-  color:#9a3412;
+.status-kasni{
+  background: #a8710165;
+  color: #7c5301;
 }
 
 /* ljepši dropdown */
