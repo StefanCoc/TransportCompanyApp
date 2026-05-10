@@ -336,6 +336,7 @@ function fillEmployeeList(employees) {
   employees.forEach((z) => {
     const tr = document.createElement("tr");
     tr.className = "clickable-row";
+    const id_zaposlenog = z.id_zaposlenog || 0;
     const ime = z.ime || "Nepoznat vozač";
     const prezime = z.prezime || "-";
     const pozicija = z.pozicija || "-";
@@ -851,6 +852,7 @@ document.addEventListener("DOMContentLoaded", () => {
   ucitajTure();
   ucitajZaposlene();
   updateInvoiceSummary();
+  ucitajVozaceZaTroskove();
 
   ["iznos", "rabat", "pdv"].forEach((id) => {
     const el = getById(id);
@@ -1004,4 +1006,85 @@ function updateStatusDropdown() {
     <option value="neplaceno">Neplaćeno (${stats.neplaceno})</option>
     <option value="kasni">Kasni (${stats.kasni})</option>
   `;
+}
+async function dodajTrosak() {
+
+  const id_zaposlenog =parseInt(document.getElementById("trosakVozac")?.value);
+  const tip_troska = document.getElementById("tipTroska")?.value;
+  const iznos = parseFloat(document.getElementById("iznosTroska")?.value);
+  const datum = document.getElementById("datumTroska")?.value;
+  const opis = document.getElementById("opisTroska")?.value;
+
+  if (!tip_troska || !iznos || !datum ) {
+    setStatus("Popuni sva obavezna polja!", "error");
+    return;
+  }
+
+  const payload = {
+    action: "dodaj_trosak",
+    id_zaposlenog,
+    tip_troska,
+    iznos,
+    datum,
+    opis
+  };
+
+  try {
+
+    const res = await fetch(N8N_WEBHOOK, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      throw new Error("Greška pri unosu troška");
+    }
+
+    const data = await res.json();
+
+    setStatus("Trošak uspješno dodan!", "success");
+
+    // reset forme
+    document.getElementById("trosakVozac").value = "";
+    document.getElementById("tipTroska").value = "";
+    document.getElementById("iznosTroska").value = "";
+    document.getElementById("datumTroska").value = "";
+    document.getElementById("opisTroska").value = "";
+
+  } catch (err) {
+
+    setStatus(err.message, "error");
+  }
+}
+async function ucitajVozaceZaTroskove() {
+  try {
+    const res = await fetch(N8N_WEBHOOK, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "pretraga_zaposlenih" })
+    });
+
+    const data = await res.json();
+    const vozaci = Array.isArray(data) ? data : data.data || [];
+
+    const select = document.getElementById("trosakVozac");
+    select.innerHTML = `<option value="">Odaberi vozača</option>`;
+
+    vozaci.forEach(v => {
+      if (v.pozicija?.toLowerCase() !== "vozac") {
+        return;
+      }
+      const opt = document.createElement("option");
+      opt.value = v.id_zaposlenog;
+      opt.textContent = `${v.ime} ${v.prezime}`;
+      select.appendChild(opt);
+    });
+
+  } catch (err) {
+    setStatus("Ne mogu učitati vozače", "error");
+  }
 }

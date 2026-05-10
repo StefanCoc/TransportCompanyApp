@@ -28,8 +28,7 @@ body {
 
 .content {
   flex: 1;
-  padding: 24px;
-  overflow: auto;
+  padding: 24px;  
 }
 
 .page {
@@ -37,11 +36,13 @@ body {
 }
 
 .card {
+  width: 100%;
   max-width: 860px;
   margin: 0 auto;
-  padding: 24px;
+
   background: #fff;
   border-radius: 12px;
+  padding: 24px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
@@ -282,10 +283,6 @@ button:hover {
     padding: 14px;
   }
 
-  .card {
-    padding: 16px;
-  }
-
   #faktura {
     grid-template-columns: 1fr;
   }
@@ -308,6 +305,7 @@ button:hover {
   gap: 10px;
   flex-wrap: wrap;
   margin-bottom: 12px;
+  align-items: center;
 }
 
 .filter-switch-row button {
@@ -541,7 +539,7 @@ button:hover {
   min-width: 150px;
   height: 37px;
   padding: 0 14px;
-  border: 1px solid #ffffff;
+  border: 1px solid #1e4fbe;
   border-radius: 10px;
   background: #2563eb;
   color: #ffffff;
@@ -569,9 +567,53 @@ button:hover {
   border-color: #565656;
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
 }
-.filter-switch-row {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  align-items: center;
+
+.expense-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+
+  width: 100%;
+  max-width: 860px;
+  margin: 20px auto 0;   /* 🔥 centriranje */
+  padding: 16px;
+
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
 }
+
+/* inputi */
+.expense-form select,
+.expense-form input {
+  height: 42px;
+  border-radius: 8px;
+  font-size: 14px;
+
+  border: 1px solid #d1d5db;
+  padding: 0 12px;
+  background: white;
+}
+
+/* dugme */
+.expense-form button {
+  height: 42px;
+  border-radius: 8px;
+
+  border: none;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+
+  font-weight: 600;
+}
+
+.expense-form button:hover {
+  background: #1e4fbe;
+}
+
+.expense-form button {
+  grid-column: 1 / -1;
+}
+
+

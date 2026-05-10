@@ -1,11 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Transport App</title>
+  <title>DBTransport Commpany</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, inicial-scale=1.0">
   <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" href="favicon/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="favicon/favicon.svg" />
+  <link rel="shortcut icon" href="favicon/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png" />
+  <link rel="manifest" href="favicon/site.webmanifest" />
 </head>
 <body>
 
+  <!-- Prijava na sistem -->
 <div id="loginPage" class="login-page">
   <div class="login-card">
     <h2>Prijava</h2>
@@ -18,16 +26,18 @@
     <p id="loginError" class="login-error hidden"></p>
   </div>
 </div>
-
+    <!-- sidebar MENU -->
 <div class="sidebar">
   <button onclick="show('dashboard'); ucitajDashboard()">Dashboard</button>
   <button onclick="show('faktura')">Napravi fakturu</button>
   <button onclick="show('klijenti')">Lista klijenata</button>
   <button onclick="show('ture')">Lista tura</button>
   <button onclick="show('zaposleni')">Lista zaposlenih</button>
+  <button onclick="show('troskovi')">Troskovi</button>
   <button onclick="logout()">Odjava</button>
 </div>
 
+  <!-- Dashboard page -->
 <div class="content">
   <div id="statusMsg" class="status hidden"></div>
 
@@ -57,9 +67,14 @@
       <div id="lateInvoicesList" class="late-invoices-list"></div>
     </div>
 
+    <div class="dash-box">
+      <h3>Troskovi po vozaču</h3>
+      <!-- TODO: implementirati da se u dashboard prikazuju troskovi po vozacu! -->
+    </div>
+
   </div>
 </div>
-
+      <!-- Fakture page -->
   <div id="faktura" class="page card">
     <h2>Napravi fakturu</h2>
     <input id="ime_klijenta" list="klijentiDatalist" placeholder="Ime klijenta">
@@ -73,7 +88,8 @@
 <label class="checkbox-row">
   <input type="checkbox" id="pdv">
   <span>PDV (17%)</span>
-</label>
+</label>  
+      <!-- Lice calculator -->
     <div id="invoiceSummary" class="invoice-summary">
       <p>Osnovica: <strong id="summaryBase">0.00 KM</strong></p>
       <p>Rabat: <strong id="summaryDiscount">0.00 KM</strong></p>
@@ -117,8 +133,6 @@
       <button onclick="otvoriPopup()">Dodaj klijenta</button>
     </div>
   </div>
-
-  <!-- ZAMIJENI CIJELI postojeći filter dio u #ture ovim -->
 
 <div id="ture" class="page card">
   <h2>Lista tura</h2>
@@ -268,6 +282,36 @@
       </div>
     </div>
   </div>
+  <div id="troskovi" class="page card">
+  <h2>Troškovi / Zaduženja</h2>
+
+  <div class="expense-form">
+
+    <select id="trosakVozac">
+      <option value="">Odaberi vozača</option>
+    </select>
+
+    <select id="tipTroska">
+      <option value="">Tip troška</option>
+      <option value="gorivo">Gorivo</option>
+      <option value="putarina">Putarina</option>
+      <option value="servis">Servis</option>
+      <option value="kazna">Kazna</option>
+      <option value="avans">Avans</option>
+      <option value="dnevnica">Dnevnica</option>
+      <option value="ostalo">Ostalo</option>
+    </select>
+
+    <input type="number" id="iznosTroska" placeholder="Iznos (KM)" min="1" step="1">
+
+    <input type="date" id="datumTroska">
+
+    <input type="text" id="opisTroska" placeholder="Opis troška">
+
+    <button onclick="dodajTrosak()">Dodaj trošak</button>
+
+  </div>
+</div>
 </div>
 </div>
 
