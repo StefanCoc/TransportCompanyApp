@@ -87,7 +87,7 @@ body {
   text-align: center;
   margin-top: 30px;
 }
-
+/* 
 .status {
   max-width: 860px;
   margin: 0 auto 16px;
@@ -104,6 +104,37 @@ body {
 .status.error {
   background: #fdecec;
   color: #9f1d1d;
+} */
+
+.status {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 18px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 500;
+  z-index: 9999;
+  opacity: 1;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.status.hidden {
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+}
+
+.status.success {
+  background: #2ecc71;
+}
+
+.status.error {
+  background: #e74c3c;
+}
+
+.status.warning {
+  background: #f39c12;
 }
 
 .actions-row {
@@ -621,3 +652,4 @@ button:hover {
   gap: 10px;
   margin-top: 18px;
 }
+

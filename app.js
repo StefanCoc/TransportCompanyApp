@@ -97,6 +97,7 @@ function formatMoney(value) {
 function setStatus(message, type = "success") {
   const box = getById("statusMsg");
   if (!box) return;
+
   if (!message) {
     box.className = "status hidden";
     box.textContent = "";
@@ -105,6 +106,13 @@ function setStatus(message, type = "success") {
 
   box.textContent = message;
   box.className = `status ${type}`;
+
+  clearTimeout(box._timeout);
+
+  box._timeout = setTimeout(() => {
+    box.className = "status hidden";
+    box.textContent = "";
+  }, 4500);
 }
 
 function resetInvoiceLoadingState() {
@@ -336,10 +344,7 @@ async function sacuvajIzmjeneKlijenta() {
       throw new Error("Greška pri izmjeni klijenta");
     }
 
-    setStatus(
-      "Klijent uspješno izmijenjen!",
-      "success"
-    );
+    setStatus("Klijent uspješno izmijenjen!", "success");
 
     zatvoriEditKlijenta();
 
