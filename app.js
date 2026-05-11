@@ -161,20 +161,35 @@ function toDisplayValue(value) {
 }
 
 function otvoriDetalje(title, data) {
+
   const popup = getById("popupDetalji");
   const naslov = getById("detaljiNaslov");
   const sadrzaj = getById("detaljiSadrzaj");
+  const editBtn = getById("editKlijentBtn");
+
   if (!popup || !naslov || !sadrzaj) return;
 
   naslov.textContent = title;
   sadrzaj.innerHTML = "";
 
   Object.entries(data || {}).forEach(([key, value]) => {
+
     const row = document.createElement("div");
+
     row.className = "details-item";
-    row.innerHTML = `<strong>${prettifyKey(key)}:</strong> ${toDisplayValue(value)}`;
+
+    row.innerHTML = `
+      <strong>${prettifyKey(key)}:</strong>
+      ${toDisplayValue(value)}
+    `;
+
     sadrzaj.appendChild(row);
   });
+
+  editBtn.onclick = () => {
+    zatvoriDetalje();
+    otvoriEditKlijenta(data);
+  };
 
   popup.classList.remove("hidden");
 }
@@ -246,6 +261,96 @@ function fillClientList(clients) {
     lista.appendChild(tr);
   });
 }
+
+function otvoriEditKlijenta(klijent) {
+
+  getById("editIdKlijenta").value =
+    klijent.id_klijenta || "";
+
+  getById("editNazivFirme").value =
+    klijent.naziv_firme || "";
+
+  getById("editJib").value =
+    klijent.jib || "";
+
+  getById("editPib").value =
+    klijent.pib || "";
+
+  getById("editAdresa").value =
+    klijent.adresa || "";
+
+  getById("editGrad").value =
+    klijent.grad || "";
+
+  getById("editMail").value =
+    klijent.mail || "";
+
+  getById("editTelefon").value =
+    klijent.broj_telefona || "";
+
+  getById("popupEditKlijent")
+    ?.classList.remove("hidden");
+}
+
+function zatvoriEditKlijenta() {
+  getById("popupEditKlijent")
+    ?.classList.add("hidden");
+}
+
+async function sacuvajIzmjeneKlijenta() {
+
+  const payload = {
+
+    action: "update_klijent",
+
+    id_klijenta:
+      parseInt(getById("editIdKlijenta").value),
+
+    naziv_firme:
+      getById("editNazivFirme").value,
+
+    jib:
+      getById("editJib").value,
+
+    pib:
+      getById("editPib").value,
+
+    adresa:
+      getById("editAdresa").value,
+
+    grad:
+      getById("editGrad").value,
+
+    mail:
+      getById("editMail").value,
+
+    broj_telefona:
+      getById("editTelefon").value
+  };
+
+  try {
+
+    const res = await apiPost(payload);
+
+    if (!res.ok) {
+      throw new Error("Greška pri izmjeni klijenta");
+    }
+
+    setStatus(
+      "Klijent uspješno izmijenjen!",
+      "success"
+    );
+
+    zatvoriEditKlijenta();
+
+    await ucitajKlijente();
+
+  } catch(err) {
+
+    setStatus(err.message, "error");
+  }
+}
+
 function formatDateToDdMmYy(value) {
   if (!value) return "-";
 

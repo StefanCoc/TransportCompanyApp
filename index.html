@@ -129,7 +129,7 @@
       <button onclick="promijeniStranicu('clients', 1)">Sljedeća</button>
     </div>
     <div class="actions-row">
-      <button onclick="ucitajKlijente()">Učitaj klijente</button>
+      <button onclick="ucitajKlijente()">Osvježi klijente</button>
       <button onclick="otvoriPopup()">Dodaj klijenta</button>
     </div>
   </div>
@@ -222,7 +222,7 @@
   </div>
 
   <div class="actions-row">
-    <button onclick="ucitajTure()">Učitaj ture</button>
+    <button onclick="ucitajTure()">Osvježi ture</button>
   </div>
 </div>
 
@@ -232,7 +232,7 @@
       <input id="vozacSearch" placeholder="Pretraga po imenu ili prezimenu">
       <button onclick="primijeniZaposleniPretragu()">Pretraži</button>
       <button onclick="ocistiZaposleniPretragu()">Očisti</button>
-      <button onclick="ucitajZaposlene()">Učitaj zaposlene</button>
+      <button onclick="ucitajZaposlene()">Osvježi zaposlene</button>
     </div>
     <div class="table-wrap">
       <table id="tabelaZaposlenih">
@@ -274,14 +274,49 @@
   </div>
 
   <div id="popupDetalji" class="popup hidden">
-    <div class="popup-content">
-      <h3 id="detaljiNaslov">Detalji</h3>
-      <div id="detaljiSadrzaj" class="details-grid"></div>
-      <div class="actions-row">
-        <button onclick="zatvoriDetalje()">Zatvori</button>
-      </div>
+  <div class="popup-content">
+    <h2 id="detaljiNaslov"></h2>
+    <div id="detaljiSadrzaj" class="details-grid"></div>
+    <div class="details-actions">
+      <button id="editKlijentBtn" class="details-edit-btn">
+        Uredi
+      </button>
+      <button onclick="zatvoriDetalje()">
+        Zatvori
+      </button>
     </div>
   </div>
+</div>
+  
+
+  <div id="popupEditKlijent" class="popup hidden">
+  <div class="popup-content">
+
+    <h3>Uredi klijenta</h3>
+
+    <input type="hidden" id="editIdKlijenta">
+
+    <input id="editNazivFirme" placeholder="Naziv firme">
+    <input id="editJib" placeholder="JIB">
+    <input id="editPib" placeholder="PIB">
+    <input id="editAdresa" placeholder="Adresa">
+    <input id="editGrad" placeholder="Grad">
+    <input id="editMail" placeholder="Mail">
+    <input id="editTelefon" placeholder="Telefon">
+
+    <div class="actions-row">
+      <button onclick="sacuvajIzmjeneKlijenta()">
+        Sačuvaj izmjene
+      </button>
+
+      <button onclick="zatvoriEditKlijenta()">
+        Zatvori
+      </button>
+    </div>
+
+  </div>
+</div>
+
   <div id="troskovi" class="page card">
   <h2>Troškovi / Zaduženja</h2>
 
