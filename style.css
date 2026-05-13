@@ -436,7 +436,7 @@ button:hover {
 /* ========================= */
 
 .warning-box{
-  grid-column:span 2;
+  grid-column:span 1;
 }
 
 .warning-box h3{
@@ -652,4 +652,87 @@ button:hover {
   gap: 10px;
   margin-top: 18px;
 }
+/* SEKCIJA TOP KLIJENTI */
 
+.top-klijenti-box{
+  grid-column:span 2;
+}
+
+.top-klijenti-box h3{
+  color:#1d4ed8;
+}
+
+/* lista */
+.top-klijenti-list{
+  margin-top:12px;
+
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+
+  max-height:200px;
+  overflow-y:auto;
+
+  padding-right:4px;
+}
+
+/* jedna kartica */
+.top-klijent-card{
+  background:#eff6ff;
+  border:1px solid #bfdbfe;
+  border-radius:10px;
+
+  padding:12px;
+
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+/* lijevi dio */
+.top-klijent-left{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+/* naziv klijenta */
+.top-klijent-name{
+  font-size:15px;
+  font-weight:700;
+  color:#111827;
+}
+
+/* info */
+.top-klijent-info{
+  font-size:13px;
+  color:#555;
+  line-height:1.4;
+}
+
+.top-klijent-info span{
+  font-weight:600;
+  color:#1d4ed8;
+}
+
+/* ranking badge */
+.top-klijent-rank{
+  background:#2563eb;
+  color:white;
+
+  padding:6px 10px;
+  border-radius:999px;
+
+  font-size:12px;
+  font-weight:700;
+}
+
+/* scrollbar */
+.top-klijenti-list::-webkit-scrollbar{
+  width:6px;
+}
+
+.top-klijenti-list::-webkit-scrollbar-thumb{
+  background:#d1d5db;
+  border-radius:999px;
+}

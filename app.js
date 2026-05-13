@@ -963,6 +963,7 @@ document.addEventListener("DOMContentLoaded", () => {
   ucitajZaposlene();
   updateInvoiceSummary();
   ucitajVozaceZaTroskove();
+  ucitajTopKlijente();
 
   ["iznos", "rabat", "pdv"].forEach((id) => {
     const el = getById(id);
@@ -1196,5 +1197,66 @@ async function ucitajVozaceZaTroskove() {
 
   } catch (err) {
     setStatus("Ne mogu učitati vozače", "error");
+  }
+}
+async function ucitajTopKlijente() {
+  try {
+
+    const container = document.getElementById("topKlijenti");
+
+    const res = await fetch(N8N_WEBHOOK, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        action: "top_klijenti"
+      })
+    });
+
+    const data = await res.json();
+
+    console.log(data);
+
+    const klijenti = Array.isArray(data)
+      ? data
+      : data.data || [];
+
+    container.innerHTML = "";
+
+    klijenti.forEach((k, index) => {
+
+      container.innerHTML += `
+  <div class="top-klijent-card">
+
+    <div class="top-klijent-left">
+
+      <div class="top-klijent-name">
+         ${k.naziv_firme}
+      </div>
+
+      <div class="top-klijent-info">
+        Promet: <span>${k.ukupan_promet} KM</span>
+      </div>
+
+      <div class="top-klijent-info">
+        Broj tura: <span>${k.broj_tura}</span>
+      </div>
+
+    </div>
+
+    <div class="top-klijent-rank">
+      TOP ${index + 1}
+    </div>
+
+  </div>
+`;
+    });
+
+  } catch (err) {
+
+    console.error(err);
+
+    setStatus("Ne mogu učitati TOP klijente", "error");
   }
 }
